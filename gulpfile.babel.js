@@ -9,6 +9,7 @@ import browserSync from 'browser-sync';
 import size from 'gulp-size';
 import twig from 'gulp-twig';
 import del from 'del';
+import plumber from 'gulp-plumber';
 
 const sync = browserSync.create();
 const reload = sync.reload;
@@ -40,6 +41,7 @@ const config = {
 
 gulp.task('sass', () => {
     return gulp.src(config.paths.src.sass)
+        .pipe(plumber())
         .pipe(sass())
         .pipe(autoprefixer({
             browsers: ['last 2 versions']
@@ -49,6 +51,7 @@ gulp.task('sass', () => {
             title: '=======*** CSS ***=======',
             showFiles: true
         }))
+        .pipe(plumber.stop())
         .pipe(gulp.dest(config.paths.dist.css))
         .pipe(sync.stream());
 });
