@@ -9,6 +9,7 @@ import browserSync from 'browser-sync';
 import size from 'gulp-size';
 import twig from 'gulp-twig';
 import del from 'del';
+import plumber from 'gulp-plumber';
 
 const sync = browserSync.create();
 const reload = sync.reload;
@@ -16,13 +17,15 @@ const config = {
     paths: {
         src: {
             html: './src/views/pages/*.twig',
-            img: './src/img/**.*',
-            fonts: './src/fonts/**.*',
+            img: './src/img/**/**.*',
+            fonts: './src/fonts/**/**.*',
+            css: './src/css/**.*',
             sass: ['src/sass/app.scss'],
             js: [
                 'src/js/libs/vue.js',
                 'src/js/app.js',
-            ]
+            ],
+            jsLib: 'src/js/modules/**.*'
         },
         dist: {
             main: './dist',
@@ -30,6 +33,7 @@ const config = {
             js: './dist/assets/js',
             img: './dist/assets/img',
             fonts: './dist/assets/fonts',
+            css: './dist/assets/css',
             html: './dist'
         }
     }
@@ -37,6 +41,7 @@ const config = {
 
 gulp.task('sass', () => {
     return gulp.src(config.paths.src.sass)
+        .pipe(plumber())
         .pipe(sass())
         .pipe(autoprefixer({
             browsers: ['last 2 versions']
@@ -46,6 +51,7 @@ gulp.task('sass', () => {
             title: '=======*** CSS ***=======',
             showFiles: true
         }))
+        .pipe(plumber.stop())
         .pipe(gulp.dest(config.paths.dist.css))
         .pipe(sync.stream());
 });
@@ -92,6 +98,12 @@ gulp.task('static', () => {
     gulp.src(config.paths.src.img)
         .pipe(gulp.dest(config.paths.dist.img));
 
+    gulp.src(config.paths.src.css)
+        .pipe(gulp.dest(config.paths.dist.css));
+
+    gulp.src(config.paths.src.jsLib)
+        .pipe(gulp.dest(config.paths.dist.js));
+
     reload();
 });
 
@@ -100,7 +112,7 @@ gulp.task('clean', () => {
 });
 
 gulp.task('build', ['clean'], function () {
-   gulp.start('sass', 'js', 'static', 'html');
+    gulp.start('sass', 'js', 'static', 'html');
 });
 
 gulp.task('server', () => {
@@ -112,7 +124,7 @@ gulp.task('server', () => {
 
 gulp.task('watch', ['default'], function () {
     gulp.watch('src/sass/**/*.*', ['sass']);
-    gulp.watch('src/js/**/*.js', ['js']);
+    gulp.watch('src/js/**/*.js', ['js', 'static']);
     gulp.watch('src/views/**/*.twig', ['html']);
     gulp.start('server');
 });
