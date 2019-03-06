@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     {% block styles %}{% endblock %}
-    <link rel="stylesheet" href="./dist/assets/app.css">
+    <link rel="stylesheet" href="./assets/css/app.css">
     {% include '../common/head.twig' %}
     <title>{% block title %}{% endblock %}</title>
 
@@ -17,6 +17,7 @@
         {% include '../common/footer.twig' %}
     </div>
 
+    <script src="./assets/js/app.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
