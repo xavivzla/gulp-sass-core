@@ -12,15 +12,17 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "babel": "^6.23.0",
-    "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.7.0",
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.8.4",
+    "@babel/polyfill": "^7.8.3",
+    "@babel/preset-env": "^7.8.4",
+    "@babel/register": "^7.8.3",
     "browser-sync": "^2.24.4",
-    "del": "^3.0.0",
-    "gulp": "^3.9.0",
-    "gulp-autoprefixer": "^5.0.0",
-    "gulp-babel": "^7.0.1",
-    "gulp-clean-css": "^3.9.4",
+    "del": "^5.1.0",
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^7.0.1",
+    "gulp-babel": "^8.0.0",
+    "gulp-clean-css": "^4.2.0",
     "gulp-concat": "^2.6.1",
     "gulp-plumber": "^1.2.1",
     "gulp-sass": "^4.0.1",
@@ -29,5 +31,10 @@
   },
   "dependencies": {
     "gulp-twig": "^1.2.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ]
   }
 }

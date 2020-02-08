@@ -1,15 +1,15 @@
-import gulp from 'gulp';
-import babel from 'gulp-babel';
-import sass from 'gulp-sass';
-import uglify from 'gulp-uglify';
-import concat from 'gulp-concat';
-import autoprefixer from 'gulp-autoprefixer';
-import clean from 'gulp-clean-css';
-import browserSync from 'browser-sync';
-import size from 'gulp-size';
-import twig from 'gulp-twig';
-import del from 'del';
-import plumber from 'gulp-plumber';
+import { src, dest, series, parallel, watch as watchGulp } from "gulp"
+import sass from 'gulp-sass'
+import babel from 'gulp-babel'
+import uglify from 'gulp-uglify'
+import concat from 'gulp-concat'
+import autoprefixer from 'gulp-autoprefixer'
+import clean from 'gulp-clean-css'
+import browserSync from 'browser-sync'
+import size from 'gulp-size'
+import twig from 'gulp-twig'
+import del from 'del'
+import plumber from 'gulp-plumber'
 
 const sync = browserSync.create();
 const reload = sync.reload;
@@ -21,10 +21,7 @@ const config = {
             fonts: './src/fonts/**/**.*',
             css: './src/css/**.*',
             sass: ['src/sass/app.scss'],
-            js: [
-                'src/js/libs/vue.js',
-                'src/js/app.js',
-            ],
+            js: 'src/js/**.*',
             jsLib: 'src/js/modules/**.*'
         },
         dist: {
@@ -39,12 +36,21 @@ const config = {
     }
 };
 
-gulp.task('sass', () => {
-    return gulp.src(config.paths.src.sass)
+// define functions
+const server = done => {
+    sync.init({
+        injectChanges: true,
+        server: config.paths.dist.main
+    });
+    done()
+}
+
+const sassGulp = () => {
+    return src(config.paths.src.sass)
         .pipe(plumber())
         .pipe(sass())
         .pipe(autoprefixer({
-            browsers: ['last 2 versions']
+            cascade: false
         }))
         .pipe(clean())
         .pipe(size({
@@ -52,81 +58,71 @@ gulp.task('sass', () => {
             showFiles: true
         }))
         .pipe(plumber.stop())
-        .pipe(gulp.dest(config.paths.dist.css))
-        .pipe(sync.stream());
-});
+        .pipe(dest(config.paths.dist.css))
+        .pipe(sync.stream())
+}
 
-gulp.task('js', () => {
-    gulp.src(config.paths.src.js)
-        .pipe(babel({ presets: ['env'] }))
-        .pipe(concat('app.js'))
+const jsGulp = done => {
+    src(config.paths.src.js)
+        .pipe(babel())
+        // .pipe(concat('app.js'))
         .pipe(size())
         .pipe(uglify())
-        .pipe(gulp.dest(config.paths.dist.js));
+        .pipe(dest(config.paths.dist.js))
+    reload()
+    done()
+}
 
-    reload();
-});
+const htmlGulp = done => {
+    src(config.paths.src.html)
+        .pipe(twig({
+            base: '/',
+            errorLogToConsole: true,
+            data: {
+                title: 'Gulp and Twig',
+                benefits: [
+                    'Fast',
+                    'Flexible',
+                    'Secure'
+                ]
+            }
+        }))
+        .pipe(size({
+            title: '=======*** HTML ***=======',
+            showFiles: true
+        }))
+        .pipe(dest(config.paths.dist.html));
+    reload()
+    done()
 
-gulp.task('html', () => {
-    gulp.src(config.paths.src.html)
-    .pipe(twig({
-        base: '/',
-        errorLogToConsole: true,
-        data: {
-            title: 'Gulp and Twig',
-            benefits: [
-                'Fast',
-                'Flexible',
-                'Secure'
-            ]
-        }
-    }))
-    .pipe(size({
-        title: '=======*** HTML ***=======',
-        showFiles: true
-    }))
-    .pipe(gulp.dest(config.paths.dist.html));
-    reload();
+}
 
+const staticGulp = done => {
+    src(config.paths.src.fonts)
+        .pipe(dest(config.paths.dist.fonts))
 
-})
+    src(config.paths.src.img)
+        .pipe(dest(config.paths.dist.img))
 
-gulp.task('static', () => {
-    gulp.src(config.paths.src.fonts)
-        .pipe(gulp.dest(config.paths.dist.fonts));
+    src(config.paths.src.css)
+        .pipe(dest(config.paths.dist.css))
 
-    gulp.src(config.paths.src.img)
-        .pipe(gulp.dest(config.paths.dist.img));
+    src(config.paths.src.jsLib)
+        .pipe(dest(config.paths.dist.js))
 
-    gulp.src(config.paths.src.css)
-        .pipe(gulp.dest(config.paths.dist.css));
+    reload()
+    done()
+}
 
-    gulp.src(config.paths.src.jsLib)
-        .pipe(gulp.dest(config.paths.dist.js));
+const cleanGulp = () => del([config.paths.dist.main])
 
-    reload();
-});
+// watch
 
-gulp.task('clean', () => {
-    return del([config.paths.dist.main]);
-});
+const watchFiles = () => {
+    watchGulp('src/sass/**/*.*', sassGulp)
+    watchGulp('src/js/**/*.js', series(jsGulp, staticGulp))
+    watchGulp('src/views/**/*.twig', htmlGulp);
+}
 
-gulp.task('build', ['clean'], function () {
-    gulp.start('sass', 'js', 'static', 'html');
-});
-
-gulp.task('server', () => {
-    sync.init({
-        injectChanges: true,
-        server: config.paths.dist.main
-    });
-});
-
-gulp.task('watch', ['default'], function () {
-    gulp.watch('src/sass/**/*.*', ['sass']);
-    gulp.watch('src/js/**/*.js', ['js', 'static']);
-    gulp.watch('src/views/**/*.twig', ['html']);
-    gulp.start('server');
-});
-
-gulp.task('default', ['build']);
+// exports 
+exports.watch = series(cleanGulp, parallel(sassGulp, jsGulp, staticGulp, htmlGulp), server, watchFiles)
